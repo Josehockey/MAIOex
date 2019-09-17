@@ -22,8 +22,6 @@ def Fourier(S, T, F) :
   return FT ; 
 
 
-
-
 Time = np.array([0, 0.6*(10**6) , 10**3     ]) ; 
 Freq = np.array([0, 5*(10**(-5)), 5*10**(-8)]) ;
 
@@ -54,6 +52,7 @@ N = 10.0**3
 A = 1.0
 f = 10.0
 T = 1.0 / N
+Time = np.array([0, 10**6 , 10**3     ]) ; 
 x = np.linspace(0.0,N*T,N)
 Signal = A*np.sin(f * 2.0 * np.pi*x)
 
@@ -75,13 +74,13 @@ plt.show()
 #Creation of the Sawtooth Signal
 
 Time = np.array([0.0, 10**6 , 10**3]) ;
-N = 10.0**3
-A = 1.0
-f = 10.0
-T = 10**6 / N
-x = np.arange(-1.0,1.0,20/(T))
-Signal=np.concatenate((x,x,x,x,x,x,x,x,x,x), axis=0, out=None)
 
+T = np.arange(0.0,10**6,10**3)
+Time = np.array([0, 10**6 , 10**3     ]) ; 
+x1 = np.arange(0.0,1.0,20/len(T))
+x2 = np.arange(-1.0,0.0,20/len(T))
+x=np.concatenate((x1,x2), axis=0, out=None)
+Signal=np.concatenate((x,x,x,x,x,x,x,x,x,x), axis=0, out=None)
 fig = plt.figure(figsize=(12,7))
 ##plt.plot(Signal,'r+')
 plt.plot(Signal)
