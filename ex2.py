@@ -1,7 +1,7 @@
 #MAIO exercise2
 
 import matplotlib.pyplot as plt
-import math
+import math as M
 import numpy as np
 
 
