@@ -3,6 +3,8 @@
 import matplotlib.pyplot as plt
 import math 
 import numpy as np
+from scipy import signal
+
 
 
 def Fourier(S, T, F) :
@@ -87,6 +89,16 @@ plt.plot(Signal)
 plt.grid(True)
 plt.show()
 print(len (Signal))
+FT= Fourier(Signal, Time, Freq) ;
+
+A = 1.0
+f = 10.0
+Time = np.array([0.0, 10**6 , 10**3]) ;
+T = np.arange(0.0,10**6,10**3)
+x = np.linspace(0, 1, 1000)
+Signal = A*signal.sawtooth(2*f * np.pi  * x)
+plt.plot(T, Signal)
+plt.show() 
 FT = Fourier(Signal, Time, Freq) ;
 
 fig = plt.figure(figsize=(12,7))
