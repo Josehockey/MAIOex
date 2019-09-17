@@ -1,10 +1,10 @@
 #MAIO exercise2
 
 import matplotlib.pyplot as plt
-import math
+import math 
 import numpy as np
 
-
+# Okay Gio I think I now how this works now
 def Fourier(S, T, F) :
 
   #[Signal]    #S is the data set
@@ -47,4 +47,4 @@ fig = plt.figure(figsize=(20,12))
 plt.plot(Frequency, np.power(FT,2) , 'r+')
 plt.plot(Frequency, np.power(FT,2) )
 plt.grid(True)
-plt.show()
+plt.show() 
