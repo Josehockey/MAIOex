@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import math 
 import numpy as np
 
-# Okay Gio I think I now how this works now
 def Fourier(S, T, F) :
 
   #[Signal]    #S is the data set
