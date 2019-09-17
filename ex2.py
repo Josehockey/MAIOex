@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import math 
 import numpy as np
 
+
 def Fourier(S, T, F) :
 
   #[Signal]    #S is the data set
@@ -27,14 +28,11 @@ Time = np.array([0, 0.6*(10**6) , 10**3     ]) ;
 Freq = np.array([0, 5*(10**(-5)), 5*10**(-8)]) ;
 
 
-
-#Creation of the Signal
+#Creation of the delta Signal
 Signal = [0]*int((Time[1]- Time[0])/Time[2]);
-Signal[int(len(Signal)/2)-1] = 1; 
-Signal[int(len(Signal)/2)-1] = 1; 
-
-fig = plt.figure(figsize=(20,12))
-plt.plot(Signal,'r+')
+Signal[int(len(Signal)/2)] = 1; 
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Signal,'r+')
 plt.plot(Signal)
 plt.grid(True)
 plt.show()
@@ -42,8 +40,34 @@ plt.show()
 Frequency = np.arange(Freq[0], Freq[1], Freq[2]) ;  #This helps with the graphs
 FT = Fourier(Signal, Time, Freq) ;
 
-fig = plt.figure(figsize=(20,12))
-plt.plot(Frequency, np.power(FT,2) , 'r+')
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Frequency, np.power(FT,2) , 'r+')
 plt.plot(Frequency, np.power(FT,2) )
 plt.grid(True)
 plt.show() 
+
+
+#Creation of the Sinusoidal Signal
+
+Time = np.array([0, 10**6 , 10**3]) ;
+N = 10.0**3
+A = 1.0
+f = 10.0
+T = 1.0 / N
+x = np.linspace(0.0,N*T,N)
+Signal = A*np.sin(f * 2.0 * np.pi*x)
+
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Signal,'r+')
+plt.plot(Signal)
+plt.grid(True)
+plt.show()
+
+FT = Fourier(Signal, Time, Freq) ;
+
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Frequency, np.power(FT,2) , 'r+')
+plt.plot(Frequency, np.power(FT,2) )
+plt.grid(True)
+plt.show() 
+
