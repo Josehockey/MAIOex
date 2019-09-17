@@ -75,29 +75,15 @@ plt.show()
 
 #Creation of the Sawtooth Signal
 
-Time = np.array([0.0, 10**6 , 10**3]) ;
 
-T = np.arange(0.0,10**6,10**3)
-Time = np.array([0, 10**6 , 10**3     ]) ; 
-x1 = np.arange(0.0,1.0,20/len(T))
-x2 = np.arange(-1.0,0.0,20/len(T))
-x=np.concatenate((x1,x2), axis=0, out=None)
-Signal=np.concatenate((x,x,x,x,x,x,x,x,x,x), axis=0, out=None)
-fig = plt.figure(figsize=(12,7))
-##plt.plot(Signal,'r+')
-plt.plot(Signal)
-plt.grid(True)
-plt.show()
-print(len (Signal))
-FT= Fourier(Signal, Time, Freq) ;
-
-A = 1.0
+A = 1.0 #this might work better for ex5
 f = 10.0
 Time = np.array([0.0, 10**6 , 10**3]) ;
 T = np.arange(0.0,10**6,10**3)
 x = np.linspace(0, 1, 1000)
-Signal = A*signal.sawtooth(2*f * np.pi  * x)
+Signal = A*signal.sawtooth(2*f * np.pi  * x + np.pi)
 plt.plot(T, Signal)
+plt.grid(True)
 plt.show() 
 FT = Fourier(Signal, Time, Freq) ;
 
