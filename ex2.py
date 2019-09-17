@@ -49,7 +49,7 @@ plt.show()
 
 #Creation of the Sinusoidal Signal
 
-Time = np.array([0, 10**6 , 10**3]) ;
+Time = np.array([0.0, 10**6 , 10**3]) ;
 N = 10.0**3
 A = 1.0
 f = 10.0
@@ -63,6 +63,31 @@ plt.plot(Signal)
 plt.grid(True)
 plt.show()
 
+FT = Fourier(Signal, Time, Freq) ;
+
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Frequency, np.power(FT,2) , 'r+')
+plt.plot(Frequency, np.power(FT,2) )
+plt.grid(True)
+plt.show() 
+
+
+#Creation of the Sawtooth Signal
+
+Time = np.array([0.0, 10**6 , 10**3]) ;
+N = 10.0**3
+A = 1.0
+f = 10.0
+T = 10**6 / N
+x = np.arange(-1.0,1.0,20/(T))
+Signal=np.concatenate((x,x,x,x,x,x,x,x,x,x), axis=0, out=None)
+
+fig = plt.figure(figsize=(12,7))
+##plt.plot(Signal,'r+')
+plt.plot(Signal)
+plt.grid(True)
+plt.show()
+print(len (Signal))
 FT = Fourier(Signal, Time, Freq) ;
 
 fig = plt.figure(figsize=(12,7))
