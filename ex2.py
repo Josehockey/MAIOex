@@ -47,4 +47,4 @@ fig = plt.figure(figsize=(20,12))
 plt.plot(Frequency, np.power(FT,2) , 'r+')
 plt.plot(Frequency, np.power(FT,2) )
 plt.grid(True)
-plt.show()
+plt.show() #will this also appear in master or only in Jose
