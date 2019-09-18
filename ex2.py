@@ -1,9 +1,6 @@
-
-
 import matplotlib.pyplot as plt
 import math
 import numpy as np
-
 
 def Fourier(S, T, F) :
   #[Signal]    #S is the data set
@@ -33,30 +30,25 @@ def Sine(T,f1,f2) :
      Sine[i] = math.sin(Time[i]*f1) + 2*math.sin(Time[i]*f2) ;
   return Sine; 
 
-def Sawtooth
-
 #---------------------
 
-Time = np.array([0, 1*(10**6) , 10**3     ]) ; 
-Freq = np.array([0, 10000*(10**(-5)), 10000*(10**(-8)) ]) ;
+Time = np.array([0, 1*(10**6) , 10**3     ]) ;                  #HERE VARYING STARTING STOPPIN AND STEP
+Freq = np.array([0, 10000*(10**(-5)), 10000*(10**(-8)) ]) ;     #HERE AS WELL IS THE TF SPACE
   
-
 #Creation of the Signals
 
-#DELTA FUNCTION
 Delta = Delta(Time) ;
-Sine = Sine (Time, 2*math.pi*(10**(-5)), 0 ) ; 
+Sine = Sine (Time, 2*math.pi*(10**(-5)), 0 ) ;                  #HERE YOU CAN CHANGE FREQUENCY (also add another)
 
+Frequency = np.arange(Freq[0], Freq[1], Freq[2]) ;              #This helps with the graphs
+Tempo = np.arange(Time[0], Time[1], Time[2]) ;                  #This helps with the graphs
 
-
-Frequency = np.arange(Freq[0], Freq[1], Freq[2]) ;  #This helps with the graphs
-Tempo = np.arange(Time[0], Time[1], Time[2]) ;  #This helps with the graphs
-FT = Fourier(Sine, Time, Freq) ;
-
+DATA = Sine ;                                                   #HERE TO CHANGE THE PLOT
+FT = Fourier(DATA, Time, Freq) ;
 
 fig = plt.figure(figsize=(20,12))
-plt.plot(Tempo, Sine , 'r+')
-plt.plot(Tempo, Sine )
+plt.plot(Tempo, DATA , 'r+')
+plt.plot(Tempo, DATA )
 plt.grid(True)
 plt.show()
 
