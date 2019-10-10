@@ -205,21 +205,21 @@ for nt in range(1,len(time)):
     
       #PLOT h	
       plt.figure(figsize=(8,6))
-      A = npy.amax(h[nt,0,:])  
-      plt.axis([0,r[-1]/1000,-1.5*A,1.5*A]) 
+      A = max([npy.amax(h[nt,0,:]),npy.amax(h[nt,1,:])])
+      plt.axis([0,r[-1]/1000,Href+A,Href-A]) 
       plt.plot(r/1000, h[nt,0,:],linewidth=3.0, color='red')
       plt.plot(r/1000, h[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('h [m]',fontsize=14)
-      plt.text(100,A-(1.5*A),"t="+str((nt-ntplot)*dt/3600)+" hours")
-      plt.text(100,A-(1.65*A),"red: lower layer",color='red')
-      plt.text(100,A-(1.8*A),"blue: upper layer",color='blue')
+      plt.text(100,Href+(0.1*A),"t="+str((nt-ntplot)*dt/3600)+" hours")
+      plt.text(100,Href+(0.2*A),"red: lower layer",color='red')
+      plt.text(100,Href+(0.3*A),"blue: upper layer",color='blue')
       plt.savefig(DirecOutputh+"GradWindAdjustment-Run"+str(Runnumber)+"-h"+str(nt)+".png")
       plt.close()
   
       #PLOT v
       plt.figure(figsize=(8,6))
-      A = npy.amax(v[nt,0,:])
+      A = A = max([npy.amax(v[nt,0,:]),npy.amax(-v[nt,0,:]), npy.amax(v[nt,1,:]) , npy.amax(-v[nt,1,:])  ]) 
       plt.axis([0,rm[-1]/1000,-2*A,2*A])   
       plt.plot(rm/1000, v[nt,0,:],linewidth=3.0, color='red')
       plt.plot(rm/1000, v[nt,1,:],linewidth=3.0, color='blue')
@@ -303,5 +303,5 @@ for nx in range (0, nx_len):
    Sum2 = Sum2 + ro2*h[-1,1,nx]*c[nx]*g
 
 PE_ref1 = Href*ro1*r[-1]*g
-PE_ref2 = Href*ro2*r[-1]*g 
+PE_ref2 = Href*ro2*r[-1]*g
 '''
