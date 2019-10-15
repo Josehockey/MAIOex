@@ -9,6 +9,13 @@ DirecOutputv = "/home/giovanni/SOAC/main/v/"
 DirecOutputend = "/home/giovanni/SOAC/main/END/"
 DirecOutputu = "/home/giovanni/SOAC/main/u/"
 
+
+def pe(h,cm):
+   PE = 0.5*g*ro1*(h[0]*h[0])/cm + 0.5*g*ro2*(h[1]*h[1]+2*h[1]*h[0])/cm
+   return PE
+def ke(u,v,h,cm):
+   KE =0.5*h[0]*(ro1*(v[0]**2+u[0]**2)/cm)+0.5*h[1]*(ro1*(v[1]**2+u[1]**2)/cm)
+   return KE
 ###############################  INPUT PARAMETERS
 
 #-----> Arts
@@ -192,6 +199,10 @@ for nt in range(1,len(time)):
    for nlayer in range(nlayer_len):
       h[nt,nlayer,0] = h[nt,nlayer,1]
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
+#Energy
+   for nx in range(1,nx_len-1):
+      KE[nt]=KE[nt] + ke(u[nt,:,nx],v[nt,:,nx],h[nt,:,nx],cm[nx])
+      PE[nt]=PE[nt] + pe(h[nt,:,nx],cm[nx])
 
    ps0[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0])) # central surface pressure
    #ps0[nt] = (ps0[nt]-ps0ref)
