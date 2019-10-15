@@ -9,13 +9,10 @@ DirecOutputv = "/home/giovanni/SOAC/main/v/"
 DirecOutputend = "/home/giovanni/SOAC/main/END/"
 DirecOutputu = "/home/giovanni/SOAC/main/u/"
 
-def flag(T1,T2) :
-   if T1 > T2 : print ('The forcing stops after the simulation')
-
 ###############################  INPUT PARAMETERS
 
 #-----> Arts
-Runnumber = 101 # number of the Run                                              
+Runnumber = 1 # number of the Run                                              
 ntplot = 1800 # frequency of output in steps (-> Look at dt for conversion)
 
 #-----> Pysical
@@ -197,7 +194,7 @@ for nt in range(1,len(time)):
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
 
    ps0[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0])) # central surface pressure
-   ps0[nt] = (ps0[nt]-ps0ref)/100
+   #ps0[nt] = (ps0[nt]-ps0ref)
 
 #------------> BEGIN OUTPUT 
    if (nt == math.trunc(nt / ntplot) * ntplot):
@@ -205,42 +202,45 @@ for nt in range(1,len(time)):
       #PLOT h	
       plt.figure(figsize=(8,6))
       A = max([npy.amax(h[nt,0,:]),npy.amax(h[nt,1,:])])
-      plt.axis([0,r[-1]/1000,2*Href-A -100 ,A+100]) 
+      B = min([npy.amin(h[nt,0,:]),npy.amin(h[nt,1,:])])
+      plt.axis([0,r[-1]/1000,B-100 ,A+100]) 
       plt.plot(r/1000, h[nt,0,:],linewidth=3.0, color='red')
       plt.plot(r/1000, h[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('h [m]',fontsize=14)
-      plt.text(100, A-50,"t="+str((nt-ntplot)*dt/3600)+" hours")
-      plt.text(100, A-100,"red: lower layer",color='red')
-      plt.text(100, A-150,"blue: upper layer",color='blue')
+      plt.text(100, A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours")
+      plt.text(100, A - 4*(A-B)/100,"red: lower layer",color='red')
+      plt.text(100, A - 7*(A-B)/100,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputh+"GradWindAdjustment-Run"+str(Runnumber)+"-h"+str(nt)+".png")
       plt.close()
   
       #PLOT v
       plt.figure(figsize=(8,6))
-      A = A = max([npy.amax(v[nt,0,:]),npy.amax(-v[nt,0,:]), npy.amax(v[nt,1,:]) , npy.amax(-v[nt,1,:])  ]) 
-      plt.axis([0,rm[-1]/1000,-2*A,2*A])   
+      A = max([npy.amax(v[nt,0,:]),npy.amax(v[nt,1,:])])
+      B = min([npy.amin(v[nt,0,:]),npy.amin(v[nt,1,:])])
+      plt.axis([0,rm[-1]/1000,B-100 ,A+100])   
       plt.plot(rm/1000, v[nt,0,:],linewidth=3.0, color='red')
       plt.plot(rm/1000, v[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('v [m/s]',fontsize=14)   
-      plt.text(100,0.9*2*A,"t="+str((nt)*dt/3600)+" hours") 
-      plt.text(100,0.8*2*A,"red: lower layer",color='red')
-      plt.text(100,0.7*2*A,"blue: upper layer",color='blue')
+      plt.text(100, A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours") 
+      plt.text(100, A - 4*(A-B)/100,"red: lower layer",color='red')
+      plt.text(100, A - 7*(A-B)/100,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputv+"GradWindAdjustment-Run"+str(Runnumber)+"-v"+str(nt)+".png")
       plt.close()
 
       #PLOT u
       plt.figure(figsize=(8,6))
-      A = A = max([npy.amax(u[nt,0,:]),npy.amax(-u[nt,0,:]), npy.amax(u[nt,1,:]) , npy.amax(-u[nt,1,:])  ]) 
-      plt.axis([0,rm[-1]/1000,-2*A,2*A])   
+      A = max([npy.amax(v[nt,0,:]),npy.amax(v[nt,1,:])])
+      B = min([npy.amin(v[nt,0,:]),npy.amin(v[nt,1,:])])
+      plt.axis([0,rm[-1]/1000,B-100 ,A+100])   
       plt.plot(rm/1000, u[nt,0,:],linewidth=3.0, color='red')
       plt.plot(rm/1000, u[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('u [m/s]',fontsize=14)   
-      plt.text(100,0.9*2*A,"t="+str((nt)*dt/3600)+" hours") 
-      plt.text(100,0.8*2*A,"red: lower layer",color='red')
-      plt.text(100,0.7*2*A,"blue: upper layer",color='blue')
+      plt.text(100,A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours") 
+      plt.text(100,A - 4*(A-B)/100,"red: lower layer",color='red')
+      plt.text(100,A - 7*(A-B)/100,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputu+"GradWindAdjustment-Run"+str(Runnumber)+"-v"+str(nt)+".png")
       plt.close()
 
@@ -296,10 +296,11 @@ plt.savefig(DirecOutputend+"GradientWind-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
+T = npy.arange(0, end, dt) 
 # PLOT time-evolution of central surface pressure (surface = lower boundary)
 plt.figure(figsize=(8,6))
-plt. axis([0,len(time)*dt/3600,-5,5])
-plt.plot(time, ps0,linewidth=2.0, color='black')
+#plt. axis([0,len(time)*dt/3600,-5,5])
+plt.plot(T, ps0,linewidth=2.0, color='black')
 plt.xlabel('time [hours]',fontsize=14)
 plt.ylabel('surface pressure deficit at r=0 [hPa]',fontsize=14) 
 
