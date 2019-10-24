@@ -1,7 +1,7 @@
 import numpy as npy
 import math as math
 import matplotlib.pyplot as plt
-
+import os
 # Solve linear shallow water equations in radial coordinate on a stretched grid, assuming axisymmetry
 
 DirecOutputrend = "/Users/jose/Documents/SOAC_proj/END/r/"
@@ -35,8 +35,8 @@ Hpert = Qmax
 
 #-----> Initial
 RMW = 500000.0  # radius of maximum initial state (velocity)
-v1max_i = 6  # max. tang. wind lower layer                                   
-v2max_i = 12  # max. tang. wind upper layer
+v1max_i = 0.0  # max. tang. wind lower layer                                   
+v2max_i = 0.0  # max. tang. wind upper layer
 
 ############################### GRIDS
 
@@ -281,9 +281,9 @@ for test in range(0,ltest):
     
     print(test,'done') 
 
-
+os.system('say "your program has finished"')
 T = npy.arange(0, end, dt) 
-for i in range(ltest):
+for i in range(0,5):
     if i==0:
     #plot different Tf
         tesx="Changing T_forcing"
@@ -310,36 +310,37 @@ for i in range(ltest):
     # PLOT time-evolution of central surface pressure (surface = lower boundary)
     plt.figure(figsize=(8,6))
     for it in range(Ntest):
-       plt.plot(T, ps0[i*Ntest + it-1,:],linewidth=2.0, color='black')
+       plt.plot(T, ps0[i*Ntest + it,:],linewidth=2.0)
     plt.xlabel('time [hours]',fontsize=14)
     plt.ylabel('surface pressure deficit at r=0 [hPa]',fontsize=14)
     plt.title('P0 '+tesx)
-    plt.legend([tx+str(1),tx+str(2),tx+str(3)])
+    plt.legend([tx+str(1),tx+str(2),tx+str(3)],loc='upper right')
+    plt.show()
     plt.savefig(DirecOutputpend+"ps0-Run"+str(Runnumber)+tesx+"with parameters="+str(Tf)+str(r0)+str(a)+str(Qmax)+str(RMW)+".png")
-    #plt.show()
     plt.close()
 
     # PLOT time-evolution of max V lower layer
     plt.figure(figsize=(8,6))
     for it in range(Ntest):
-       plt.plot(T, vmax[i*Ntest + it-1,:],linewidth=2.0, color='black')
+       plt.plot(T, vmax[i*Ntest + it,:],linewidth=2.0)
     plt.xlabel('time [hours]',fontsize=14)
     plt.ylabel('max v [m/s]',fontsize=14)
     plt.title('vmax '+tesx)
-    plt.legend([tx+str(1),tx+str(2),tx+str(3)])
+    plt.legend([tx+str(1),tx+str(2),tx+str(3)], loc='upper right')
+    plt.show()
     plt.savefig(DirecOutputvend+"vmax-Run"+str(Runnumber)+tesx+"with parameters="+str(Tf)+str(r0)+str(a)+str(Qmax)+str(RMW)+".png")
-    #plt.show()
+
     plt.close()
 
     # PLOT time-evolution of  radious of max V lower layer
     plt.figure(figsize=(8,6))
     for it in range(Ntest):
-       plt.plot(T, rvmax[i*Ntest + it-1,:],linewidth=2.0, color='black')
+       plt.plot(T, rvmax[i*Ntest + it,:],linewidth=2.0)
     plt.xlabel('time [hours]',fontsize=14)
     plt.ylabel('r of max v [m]',fontsize=14)
     plt.title('r of max v '+tesx)
-    plt.legend([tx+str(1),tx+str(2),tx+str(3)])
+    plt.legend([tx+str(1),tx+str(2),tx+str(3)], loc='upper right')
+    plt.show()
     plt.savefig(DirecOutputrend+"rvmax-Run"+str(Runnumber)+tesx+"with parameters="+str(Tf)+str(r0)+str(a)+str(Qmax)+str(RMW)+".png")
-    #plt.show()
+    
     plt.close()
-
