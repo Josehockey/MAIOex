@@ -5,20 +5,15 @@ import matplotlib.pyplot as plt
 # Solve linear shallow water equations in radial coordinate on a stretched grid, assuming axisymmetry
 # Linear analysis over the initial background state imposed
 
-DirecOutputh = "/home/giovanni/SOAC/main2/h/"
-DirecOutputv = "/home/giovanni/SOAC/main2/v/"
-DirecOutputu = "/home/giovanni/SOAC/main2/u/"
-DirecOutputend = "/home/giovanni/SOAC/main2/END/"
-
-DirecOutputVMAX = "/home/giovanni/SOAC/main2/VMAX/"
-DirecOutputRMAX = "/home/giovanni/SOAC/main2/RMAX/"
-DirecOutputPMAX = "/home/giovanni/SOAC/main2/PMAX/"
-DirecOutputWAVES = "/home/giovanni/SOAC/main2/WAVES/"
+DirecOutputh = "/home/giovanni/SOAC/main2/Lin/h/"
+DirecOutputv = "/home/giovanni/SOAC/main2/Lin/v/"
+DirecOutputu = "/home/giovanni/SOAC/main2/Lin/u/"
+DirecOutputend = "/home/giovanni/SOAC/main2//Lin/END/"
 
 ###############################  INPUT PARAMETERS
 
 #-----> Arts
-Runnumber = 1000   # number of the Run                                              
+Runnumber = 1010   # number of the Run                                              
 ntplot = 1800      # frequency of output in steps (-> Look at dt for conversion)
 
 #-----> Pysical
@@ -38,8 +33,8 @@ r0 = 500000.0                  # radius of maximum forcing [m]
 
 #-----> Initial
 RMW = 500000.0     # radius of maximum initial state (velocity)
-v1max_i = 30.0      # max. tang. wind lower layer                                   
-v2max_i = 15.0      # max. tang. wind upper layer
+v1max_i = 20.0      # max. tang. wind lower layer                                   
+v2max_i = 10.0      # max. tang. wind upper layer
 
 ############################### GRIDS
 
@@ -55,9 +50,9 @@ labda = 0.05 # parameter stretched grid                                       ##
 b = 20000.0 # parameter stretched grid                                         ###then increase lambda and decrease b to increase the focus power and vice versa
 
 r = npy.zeros(nx_len)   # radial distance grid points u and v                  
-c = npy.zeros(nx_len)                                                          
+c = npy.zeros(nx_len)   # dr^-1                                                     
 rm = npy.zeros(nx_len)  # radial distance grid points h 
-cm = npy.zeros(nx_len)
+cm = npy.zeros(nx_len)  # drm^-1
 
 for nx in range(0, nx_len):
    r[nx] = b * (math.exp(labda*nx) - 1)
@@ -94,19 +89,7 @@ for nlayer in range(nlayer_len):
    for nx in range(nx_len):
       u[0,nlayer,nx] = 0							    #---> Initial radial velocity set to zero.
 
-
 #-----> Gradient wind balance at t=0
-''' VAN DELDEN 
-h[0,0,0] = Href 
-h[0,1,0] = Href
-for nx in range(1,nx_len):
-   dphi1 = (((v[0,0,nx]*v[0,0,nx])/rm[nx]) + (f_cor*v[0,0,nx])) * math.pow(cm[nx],-1)      #HERE ALSO MULTIPLY dx. BUT dx IS TAKEN AS 1. 
-   dphi2 = (((v[0,1,nx]*v[0,1,nx])/rm[nx]) + (f_cor*v[0,1,nx])) * math.pow(cm[nx],-1) 
-   dh2 = (1/((1-eps)*g)) * (dphi2 - dphi1)
-   dh1 = (dphi1/g) - (eps*dh2)
-   h[0,0, nx] = h[0,0, nx-1]+dh1
-   h[0,1, nx] = h[0,1, nx-1]+dh2     
-'''
 h[0,0,-1] = Href 
 h[0,1,-1] = Href
 for nx in range(1,nx_len):
@@ -119,12 +102,7 @@ for nx in range(1,nx_len):
                                                                                 
 for nx in range (nx_len):
    geopot[0,0,nx] = g * (h[0,0,nx] + (eps * h[0,1,nx] ))
-   geopot[0,1,nx] = g * (h[0,0,nx] + h[0,1,nx] )                                 
-
-#Values at t=0
-
-ps0ref =  g * ((ro1 * Href) + (ro2 * Href)) # central surface pressure : reference state            ###I don't get, you calculate ps0ref but it's ps0[0]
-ps0[0] = g * ((ro1 * h[0,0,0]) + (ro2 * h[0,1,0])) # central surface pressure : initial state
+   geopot[0,1,nx] = g * (h[0,0,nx] + h[0,1,nx] ) 
 
 #-----> Specify forcing
 for nt in range(len(time)):
@@ -135,6 +113,19 @@ for nt in range(len(time)):
       if time[nt]>T_forcing: 
          M[nt,0,nx] = 0.0
          M[nt,1,nx] = 0.0
+                                
+#Values of interest -> Initial conditions
+
+ps0ref =  g * ((ro1 * Href) + (ro2 * Href))        # central surface pressure : reference state         
+ps0[0] = g * ((ro1 * h[0,0,0]) + (ro2 * h[0,1,0])) # central surface pressure : initial state
+
+vmax[0] = npy.amax(v[0,0,:]) 			   # initial maximum velocity
+index = npy.where(v[0,0,:] == vmax[0])  
+Un = npy.zeros([1,1])
+if npy.shape(index) == npy.shape(Un) :		   # initial ray of maximum velocity
+   rmax[0] = r[index]
+else :
+   rmax[0] = 0
 
 ##################################### ALGORITHM 
 
@@ -148,7 +139,7 @@ for nt in range(1,len(time)):
          h[nt,nlayer,nx] = h[nt-1,nlayer,nx] - (dt * h[0,nlayer,nx] * c[nx]*(u[nt-1,nlayer,nx+1]- u[nt-1,nlayer,nx]) )   
          h[nt,nlayer,nx] = h[nt,nlayer,nx] - u[nt-1,nlayer,nx]*(h[0,nlayer,nx+1] - h[0,nlayer,nx])*cm[nx]*dt
          h[nt,nlayer,nx] = h[nt,nlayer,nx] - h[0,nlayer,nx]*u[nt-1,nlayer,nx]/rm[nx]
-         h[nt,nlayer,nx] = h[nt,nlayer,nx] + (dt * M[nt,nlayer,nx])     		                                #miss advection and H is taken constant as Href. 
+         h[nt,nlayer,nx] = h[nt,nlayer,nx] + (dt * M[nt,nlayer,nx])     		                               
       #--->Boundary conditions (ensure constant h at r=0 and r=+infty)
       h[nt,nlayer,0] = h[nt,nlayer,1]
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
@@ -165,7 +156,7 @@ for nt in range(1,len(time)):
    for nlayer in range(nlayer_len):
       for nx in range(1,nx_len-1):
          v[nt,nlayer,nx] = v[nt-1,nlayer,nx] - ( dt * (f_cor + (v[0,nlayer,nx]/r[nx]) + (v[0,nlayer,nx+1] - v[0,nlayer,nx])*c[nx]) * u[nt-1,nlayer,nx])
-         u[nt,nlayer,nx] = u[nt-1,nlayer,nx] - (dt * cm[nx] * (geopot[nt,nlayer,nx]-geopot[nt,nlayer,nx-1]))  # u & v on rm-grids
+         u[nt,nlayer,nx] = u[nt-1,nlayer,nx] - (dt * cm[nx] * (geopot[nt,nlayer,nx]-geopot[nt,nlayer,nx-1]))  
          u[nt,nlayer,nx] = u[nt,nlayer,nx] + (dt * (f_cor + (2*v[0,nlayer,nx]/r[nx])) * v[nt,nlayer,nx])
          u[nt,nlayer,nx] = u[nt,nlayer,nx] + (dt * ( ((v[0,nlayer,nx] * v[0,nlayer,nx])/rm[nx]) + (v[0,nlayer,nx]*f_cor) ) )
          v[nt,nlayer,nx] = v[nt-1,nlayer,nx] - ( dt * (f_cor + (v[0,nlayer,nx]/r[nx]) + (v[0,nlayer,nx+1] - v[0,nlayer,nx])*c[nx]) * u[nt,nlayer,nx])
@@ -176,8 +167,8 @@ for nt in range(1,len(time)):
       v[nt,nlayer,-1] = v[nt,nlayer,-2]
       u[nt,nlayer,0] = 0
       v[nt,nlayer,0] = 0
-      u[nt,nlayer,1] = u[nt,nlayer,1]
-      v[nt,nlayer,1] = v[nt,nlayer,1]
+      u[nt,nlayer,1] = u[nt,nlayer,0]
+      v[nt,nlayer,1] = v[nt,nlayer,0]
    
 # Backward (corrector) time step in h
    for nlayer in range(nlayer_len):
@@ -190,7 +181,14 @@ for nt in range(1,len(time)):
       h[nt,nlayer,0] = h[nt,nlayer,1]
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
  
-#   ps0[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0])) # central surface pressure
+#Values of interest -> Timeseries
+   ps0[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0])) # central surface pressure
+   vmax[nt] = npy.amax(v[nt,0,:]) 			   # initial maximum velocity
+   index = npy.where(v[nt,0,:] == vmax[nt])  
+   if npy.shape(index) == npy.shape(Un):		   # initial ray of maximum velocity
+      rmax[nt] = r[index]
+   else:
+      rmax[nt] = 0
   
 #------------> BEGIN OUTPUT 
    if (nt == math.trunc(nt / ntplot) * ntplot):
@@ -199,14 +197,15 @@ for nt in range(1,len(time)):
       plt.figure(figsize=(8,6))
       A = max([npy.amax(h[nt,0,:]),npy.amax(h[nt,1,:])])
       B = min([npy.amin(h[nt,0,:]),npy.amin(h[nt,1,:])])
-      plt.axis([0,r[-1]/1000,B-100 ,A+100]) 
+      C = (A-B)/10
+      plt.axis([0,r[-1]/1000,B-C ,A+C]) 
       plt.plot(r/1000, h[nt,0,:],linewidth=3.0, color='red')
       plt.plot(r/1000, h[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('h [m]',fontsize=14)
-      plt.text(100, A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours")
-      plt.text(100, A - 4*(A-B)/100,"red: lower layer",color='red')
-      plt.text(100, A - 7*(A-B)/100,"blue: upper layer",color='blue')
+      plt.text(100, A - C,"t="+str((nt)*dt/3600)+" hours")
+      plt.text(100, A - 2*C,"red: lower layer",color='red')
+      plt.text(100, A - 3*C,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputh+"GradWindAdjustment-Run"+str(Runnumber)+"-h"+str(nt)+".png")
       plt.close()
   
@@ -214,37 +213,37 @@ for nt in range(1,len(time)):
       plt.figure(figsize=(8,6))
       A = max([npy.amax(v[nt,0,:]),npy.amax(v[nt,1,:])])
       B = min([npy.amin(v[nt,0,:]),npy.amin(v[nt,1,:])])
-      plt.axis([0,rm[-1]/1000,B-100 ,A+100])   
+      C = (A-B)/10
+      plt.axis([0,rm[-1]/1000,B-C ,A+C])   
       plt.plot(rm/1000, v[nt,0,:],linewidth=3.0, color='red')
       plt.plot(rm/1000, v[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('v [m/s]',fontsize=14)   
-      plt.text(100, A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours") 
-      plt.text(100, A - 4*(A-B)/100,"red: lower layer",color='red')
-      plt.text(100, A - 7*(A-B)/100,"blue: upper layer",color='blue')
+      plt.text(100, A - C,"t="+str((nt)*dt/3600)+" hours") 
+      plt.text(100, A - 2*C,"red: lower layer",color='red')
+      plt.text(100, A - 3*C,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputv+"GradWindAdjustment-Run"+str(Runnumber)+"-v"+str(nt)+".png")
       plt.close()
 
       #PLOT u
       plt.figure(figsize=(8,6))
-      A = max([npy.amax(v[nt,0,:]),npy.amax(v[nt,1,:])])
-      B = min([npy.amin(v[nt,0,:]),npy.amin(v[nt,1,:])])
-      plt.axis([0,rm[-1]/1000,B-100 ,A+100])   
+      A = max([npy.amax(u[nt,0,:]),npy.amax(u[nt,1,:])])
+      B = min([npy.amin(u[nt,0,:]),npy.amin(u[nt,1,:])])
+      C = (A-B)/10
+      plt.axis([0,rm[-1]/1000,B-C ,A+C])   
       plt.plot(rm/1000, u[nt,0,:],linewidth=3.0, color='red')
       plt.plot(rm/1000, u[nt,1,:],linewidth=3.0, color='blue')
       plt.xlabel('radius [km]',fontsize=14)
       plt.ylabel('u [m/s]',fontsize=14)   
-      plt.text(100,A - 1*(A-B)/100,"t="+str((nt)*dt/3600)+" hours") 
-      plt.text(100,A - 4*(A-B)/100,"red: lower layer",color='red')
-      plt.text(100,A - 7*(A-B)/100,"blue: upper layer",color='blue')
+      plt.text(100,A - C,"t="+str((nt)*dt/3600)+" hours") 
+      plt.text(100,A - 2*C,"red: lower layer",color='red')
+      plt.text(100,A - 3*C,"blue: upper layer",color='blue')
       plt.savefig(DirecOutputu+"GradWindAdjustment-Run"+str(Runnumber)+"-v"+str(nt)+".png")
       plt.close()
 
 #---> END OUTPUT 
 #---> END TIME LOOP
 #########################################################################################
-'''
-
 # compute local internal Rossby radius
 RR = math.pow((1-eps)*g*Href,0.5)/(f_cor + (2 * v1max_i / RMW)) 
 
@@ -253,7 +252,6 @@ print ("number  Dps(r=0)     a  Rossby radius  v1max_i  v2max_i   RMW      Qmax/
 print ("%5.0f, %8.2f, %8.2f, %8.2f,%8.2f,%8.2f, %8.2f, %8.2f, %8.2f, %8.2f")% (Runnumber,ps0[nt],a/1000,RR/1000,v1max_i,v2max_i,RMW/1000,Qmax/Href,T_forcing/3600.,nt*dt/3600.)
 
 # Compute the gradient wind, vgrad at the end of the run and plot both vgrad and v
-nt = len(time) - 1
 for nx in range(1,nx_len-1):
    c1 = f_cor * rm[nx]
    gradphi0 = cm[nx] * ((geopot[nt,0,nx]-geopot[nt,0,nx-1]))   # pressur gradient calculated on rm-grid
@@ -292,16 +290,37 @@ plt.savefig(DirecOutputend+"GradientWind-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
+
 T = npy.arange(0, end, dt) 
+for i in range (len(ps0)):
+   ps0[i] = (ps0[i]-ps0ref)/100.0
+   rmax[i] = rmax[i]/1000.0
+
 # PLOT time-evolution of central surface pressure (surface = lower boundary)
 plt.figure(figsize=(8,6))
 plt.plot(T, ps0,linewidth=2.0, color='black')
 plt.xlabel('time [hours]',fontsize=14)
 plt.ylabel('surface pressure deficit at r=0 [hPa]',fontsize=14) 
-
 plt.savefig(DirecOutputend+"ps0-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
+# PLOT time-evolution of max velocity
+plt.figure(figsize=(8,6))
+plt.plot(T, vmax,linewidth=2.0, color='black')
+plt.xlabel('time [hours]',fontsize=14)
+plt.ylabel('maximum velocity in the system [m/s]',fontsize=14) 
+plt.savefig(DirecOutputend+"MaxV-Run"+str(Runnumber)+".png")
+plt.show()
+plt.close()
+
+# PLOT time-evolution of rmax velocity
+plt.figure(figsize=(8,6))
+plt.plot(T, rmax,linewidth=2.0, color='black')
+plt.xlabel('time [hours]',fontsize=14)
+plt.ylabel('ray of maximum velocity [km]',fontsize=14) 
+plt.savefig(DirecOutputend+"MaxR-Run"+str(Runnumber)+".png")
+plt.show()
+plt.close()
+
 #--------------------------------------------------------- FROM NOW ON STUDY BASED ON THE MODEL ------------------------------------------------------------
-'''
