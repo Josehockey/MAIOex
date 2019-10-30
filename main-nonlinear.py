@@ -3,56 +3,57 @@ import math as math
 import matplotlib.pyplot as plt
 
 # Solve linear shallow water equations in radial coordinate on a stretched grid, assuming axisymmetry
-# Non linear analysis over the initial background state imposed
+# Non-linear analysis over the initial background state imposed
 
-DirecOutputh = "/home/giovanni/SOAC/main2/Nlin/h/"
-DirecOutputv = "/home/giovanni/SOAC/main2/Nlin/v/"
-DirecOutputu = "/home/giovanni/SOAC/main2/Nlin/u/"
+DirecOutputh =   "/home/giovanni/SOAC/main2/Nlin/h/"
+DirecOutputv =   "/home/giovanni/SOAC/main2/Nlin/v/"
+DirecOutputu =   "/home/giovanni/SOAC/main2/Nlin/u/"
 DirecOutputend = "/home/giovanni/SOAC/main2/Nlin/END/"
 
-###############################  INPUT PARAMETERS
+############################### INPUT PARAMETERS
 
 #-----> Arts
-Runnumber = 1010   # number of the Run                                              
+Runnumber = 1      # number of the Run                                              
 ntplot = 1800      # frequency of output in steps (-> Look at dt for conversion)
 
 #-----> Pysical
 g = 9.81
-f_cor = 0.0001   #45 degree
+f_cor = 0.0001     # 45 degree
 eps = 0.9      
 ro1 = 1.0
 ro2 = eps * ro1
 Href = 5000.0
 nlayer_len = 2
+PSOref =  g * ((ro1 * Href) + (ro2 * Href))        # central surface pressure : reference state    
 
 #-----> Forcing
-T_forcing= 6 * 3600.0          #time scale forcing [s]
+T_forcing= 6 * 3600.0          # time scale forcing [s]
 a = 500000.0                   # horizontal scale of the forcing [m]
-Qmax = Href/(24*3600)    # amplitude of forcing ("Diabatic mass flux") normalize with time of integration               
+Qmax = 0.4*Href                # amplitude of forcing ("Diabatic mass flux")       
 r0 = 500000.0                  # radius of maximum forcing [m]
 
 #-----> Initial
-RMW = 500000.0     # radius of maximum initial state (velocity)
+RMW = 500000.0      # radius of maximum initial state (velocity)
 v1max_i = 20.0      # max. tang. wind lower layer                                   
 v2max_i = 10.0      # max. tang. wind upper layer
 
 ############################### GRIDS
 
 #------> Time
-dt = 1  # time step in seconds
-end = 24*3600 # 24 total time of integration                                  
+dt = 2            # time step in seconds
+end = 24*3600     # 24 total time of integration                                  
 time = npy.arange(0, end, dt)           
 
 #-----> Space
-nx_len = 125 #number of points
-dx = 1 #grid risolution							      #---> Keep dx fixed and moves the others parameters. 
-labda = 0.05 # parameter stretched grid                                       ###SET UP : l=0.05 b = 8000.0 nx_len = 125 perfect for focus 4000km 
-b = 20000.0 # parameter stretched grid                                         ###then increase lambda and decrease b to increase the focus power and vice versa
+nx_len = 125      # number of points
+dx = 1            # grid risolution							     . 
+labda = 0.05      # parameter stretched grid
+b = 20000.0       # parameter stretched grid                                         
 
 r = npy.zeros(nx_len)   # radial distance grid points u and v                  
-c = npy.zeros(nx_len)                                                          
+c = npy.zeros(nx_len)   # dr^-1                                                       
 rm = npy.zeros(nx_len)  # radial distance grid points h 
-cm = npy.zeros(nx_len)
+cm = npy.zeros(nx_len)  # drm^-1
 
 for nx in range(0, nx_len):
    r[nx] = b * (math.exp(labda*nx) - 1)
@@ -60,34 +61,37 @@ for nx in range(0, nx_len):
    c[nx] = math.pow(labda*(r[nx]+b),-1)
    cm[nx] = math.pow(labda*(rm[nx]+b),-1)
 
-#-----> Velocities
+#-----> Velocities and algorithm
 u = npy.zeros((len(time),nlayer_len,nx_len))
 v = npy.zeros((len(time),nlayer_len,nx_len))
 h = npy.zeros((len(time),nlayer_len,nx_len))
 M = npy.zeros((len(time),nlayer_len,nx_len))
 geopot = npy.zeros((len(time),nlayer_len,nx_len))                               
 
-vgrad = npy.zeros((nlayer_len,nx_len))       #--> Time indipendent 
+#-----> Variables of interest
+vgrad = npy.zeros((nlayer_len,nx_len))       #Final wind grid balance--> Time indipendent 
+PSO = npy.zeros(len(time))                   #Timeseries of pressure in the centre
+vmax = npy.zeros(len(time))                  #Timeseries of maximum velocity 
+PE = npy.zeros(len(time))                    #Timeseries of the kinetic energy
+KE = npy.zeros(len(time))                    #Timeseries of potential energy
+PE_ref = 0			
+KE_ref = 0
 
-ps0 = npy.zeros(len(time))                   #--> Timeseries of pressure in the centre
-vmax = npy.zeros(len(time))   
-rmax = npy.zeros(len(time)) 
-
-###################### INITIAL CONDITIONS
+############################### INITIAL CONDITIONS
 
 #-----> Rankine vortex
 for nx in range(0, nx_len):
-   if rm[nx] <= RMW: 
-      v[0,0,nx] = v1max_i * rm[nx] / RMW
-      v[0,1,nx] = v2max_i * rm[nx] / RMW
+   if r[nx] <= RMW: 
+      v[0,0,nx] = v1max_i * r[nx] / RMW
+      v[0,1,nx] = v2max_i * r[nx] / RMW
   
-   if rm[nx] > RMW: 
-      v[0,0,nx] = v1max_i * RMW / rm[nx]
-      v[0,1,nx] = v2max_i * RMW / rm[nx]
+   if r[nx] > RMW: 
+      v[0,0,nx] = v1max_i * RMW / r[nx]
+      v[0,1,nx] = v2max_i * RMW / r[nx]
   
 for nlayer in range(nlayer_len):
    for nx in range(nx_len):
-      u[0,nlayer,nx] = 0							    #---> Initial radial velocity set to zero.
+      u[0,nlayer,nx] = 0		 # Initial radial velocity set to zero.
 
 #-----> Gradient wind balance at t=0
 h[0,0,-1] = Href 
@@ -108,39 +112,38 @@ for nx in range (nx_len):
 for nt in range(len(time)):
    for nx in range(nx_len):
       if time[nt]<=T_forcing: 
-         M[nt,0,nx] = -(Qmax) * math.exp(-math.pow((r[nx]-r0)/a,2))     	
-         M[nt,1,nx] = (Qmax/(eps)) * math.exp(-math.pow((r[nx]-r0)/a,2)) 
+         M[nt,0,nx] = -(Qmax/T_forcing) * math.exp(-math.pow((r[nx]-r0)/a,2))     	
+         M[nt,1,nx] = (Qmax/(eps*T_forcing)) * math.exp(-math.pow((r[nx]-r0)/a,2)) 
       if time[nt]>T_forcing: 
          M[nt,0,nx] = 0.0
          M[nt,1,nx] = 0.0
 
-#Values of interest -> Initial conditions
-
-ps0ref =  g * ((ro1 * Href) + (ro2 * Href))        # central surface pressure : reference state         
-ps0[0] = g * ((ro1 * h[0,0,0]) + (ro2 * h[0,1,0])) # central surface pressure : initial state
-
+#-----> Variables of interest: initialization     
+PSO[0] = g * ((ro1 * h[0,0,0]) + (ro2 * h[0,1,0])) # central surface pressure : initial state
 vmax[0] = npy.amax(v[0,0,:]) 			   # initial maximum velocity
-index = npy.where(v[0,0,:] == vmax[0])  
-Un = npy.zeros([1,1])
-if npy.shape(index) == npy.shape(Un) :		   # initial ray of maximum velocity
-   rmax[0] = r[index]
-else :
-   rmax[0] = 0
 
-##################################### ALGORITHM 
+#-----> Energy inspection 
+start = 5000000     #starting inspection [m]
+end = 10000000      #end inspection [m]
+result1 = npy.where(r < end)
+result2 = npy.where(r > start)
+result = npy.arange(npy.amin(result2), npy.amax(result1), 1)
+for nx in range (result[0], result[-1]):
+   PE_ref = PE_ref + (h[0,0,nx]*h[0,0,nx] + eps*h[0,1,nx]*h[0,1,nx] + 2*eps*h[0,0,nx]*h[0,1,nx])*rm[nx]*math.pow(cm[nx],-1)
+   KE_ref = KE_ref + (h[0,0,nx]*(u[0,0,nx]*u[0,0,nx]+v[0,0,nx]*v[0,0,nx]) + eps*h[0,1,nx]*(u[0,1,nx]*u[0,1,nx]+v[0,1,nx]*v[0,1,nx]))*rm[nx]*math.pow(cm[nx],-1)
+  
+############################### ALGORITHM 
 
 for nt in range(1,len(time)):
- 
-   time[nt] = time[nt] / 3600.0  # time in hours
-  
-   #---> Compute the new height (NON LINEAR VERSION FULL EQUATIONS -> FORWARD H)
+
+   #---> Compute the new height (NON LINEAR VERSION FULL EQUATIONS : FORWARD H)
    for nlayer in range(nlayer_len):
       for nx in range(1,nx_len-1):
          h[nt,nlayer,nx] = h[nt-1,nlayer,nx] - (dt * h[nt-1,nlayer,nx] * c[nx]*(u[nt-1,nlayer,nx+1]- u[nt-1,nlayer,nx]) )   
          h[nt,nlayer,nx] = h[nt,nlayer,nx] - u[nt-1,nlayer,nx]*(h[nt-1,nlayer,nx+1] - h[nt-1,nlayer,nx])*cm[nx]*dt
          h[nt,nlayer,nx] = h[nt,nlayer,nx] - h[nt-1,nlayer,nx]*u[nt-1,nlayer,nx]/rm[nx]
          h[nt,nlayer,nx] = h[nt,nlayer,nx] + (dt * M[nt,nlayer,nx])   		                              
-      #--->Boundary conditions (ensure constant h at r=0 and r=+infty)
+      #---> Boundary conditions (ensure constant h at r=0 and r=+infty)
       h[nt,nlayer,0] = h[nt,nlayer,1]
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
 
@@ -149,10 +152,9 @@ for nt in range(1,len(time)):
       geopot[nt,0,nx] = g * (h[nt,0,nx] + (eps * h[nt,1,nx] ))
       geopot[nt,1,nx] = g * (h[nt,0,nx] + h[nt,1,nx] )
 
-   # v: forward (predictor) in time using previous value of u
-   # u: Backward in time using new values of h and v
-   # v: Backward (corrector) in time using new value of u
-
+   #---> v: forward (predictor) in time using previous value of u
+   #---> u: Backward in time using new values of h and v
+   #---> v: Backward (corrector) in time using new value of u
    for nlayer in range(nlayer_len):
       for nx in range(1,nx_len-1):
          v[nt,nlayer,nx] = v[nt-1,nlayer,nx] - ( dt * (f_cor + (v[nt-1,nlayer,nx]/r[nx]) + (v[nt-1,nlayer,nx+1] - v[nt-1,nlayer,nx])*c[nx]) * u[nt-1,nlayer,nx])
@@ -161,7 +163,7 @@ for nt in range(1,len(time)):
          u[nt,nlayer,nx] = u[nt,nlayer,nx] + (dt * v[nt,nlayer,nx] * v[nt,nlayer,nx] / r[nx])
          v[nt,nlayer,nx] = v[nt-1,nlayer,nx] - ( dt * (f_cor + (v[nt-1,nlayer,nx]/r[nx]) + (v[nt-1,nlayer,nx+1] - v[nt-1,nlayer,nx])*c[nx]) * u[nt,nlayer,nx])
 
-# Boundary conditions -> Continuty at the boundary and zero in the centre
+   #---> Boundary conditions (continuity at the boundaries and zero in the centre)
    for nlayer in range(nlayer_len):
       u[nt,nlayer,-1] = u[nt,nlayer,-2]
       v[nt,nlayer,-1] = v[nt,nlayer,-2]
@@ -170,7 +172,7 @@ for nt in range(1,len(time)):
       u[nt,nlayer,1] = u[nt,nlayer,0]
       v[nt,nlayer,1] = v[nt,nlayer,0]
 
-# Backward (corrector) time step in h
+   #---> h: Backward (corrector) in time using new value of u 
    for nlayer in range(nlayer_len):
       for nx in range(1,nx_len-1):
          h[nt,nlayer,nx] = h[nt-1,nlayer,nx] - (dt * h[nt-1,nlayer,nx] * c[nx]*(u[nt,nlayer,nx+1]- u[nt,nlayer,nx]) )   
@@ -181,16 +183,19 @@ for nt in range(1,len(time)):
       h[nt,nlayer,0] = h[nt,nlayer,1]
       h[nt,nlayer,-1] = h[nt,nlayer,-2]
 
-#Values of interest -> Timeseries
-   ps0[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0])) # central surface pressure
+   #---> Values of interest (timeseries)
+   PSO[nt] = g * ((ro1 * h[nt,0,0]) + (ro2 * h[nt,1,0]))   # central surface pressure
    vmax[nt] = npy.amax(v[nt,0,:]) 			   # initial maximum velocity
-   index = npy.where(v[nt,0,:] == vmax[nt])  
-   if npy.shape(index) == npy.shape(Un):		   # initial ray of maximum velocity
-      rmax[nt] = r[index]
-   else:
-      rmax[nt] = 0
-  
-#------------> BEGIN OUTPUT 
+
+   SUM1 = 0;
+   SUM2 = 0;
+   for nx in range (result[0], result[-1]) :
+      SUM1 = SUM1 + (h[nt,0,nx]*h[nt,0,nx] + eps*h[nt,1,nx]*h[nt,1,nx] + 2*eps*h[nt,0,nx]*h[nt,1,nx])*rm[nx]*math.pow(cm[nx],-1)
+      SUM2 = SUM2 + (h[nt,0,nx]*(u[nt,0,nx]*u[nt,0,nx]+v[nt,0,nx]*v[nt,0,nx]) + eps*h[nt,1,nx]*(u[nt,1,nx]*u[nt,1,nx]+v[nt,1,nx]*v[nt,1,nx]))*rm[nx]*math.pow(cm[nx],-1)
+   PE[nt] = math.pi*g*ro1*SUM1
+   KE[nt] = math.pi*g*ro1*SUM2
+
+   #------------> BEGIN OUTPUT 
    if (nt == math.trunc(nt / ntplot) * ntplot):
     
       #PLOT h	
@@ -244,17 +249,10 @@ for nt in range(1,len(time)):
 #---> END OUTPUT 
 #---> END TIME LOOP
 
-#---> END OUTPUT 
-#---> END TIME LOOP
 #########################################################################################
 
-
-# compute local internal Rossby radius
+# Compute local internal Rossby radius
 RR = math.pow((1-eps)*g*Href,0.5)/(f_cor + (2 * v1max_i / RMW)) 
-
-nt = len(time) - 1 
-print ("number  Dps(r=0)     a  Rossby radius  v1max_i  v2max_i   RMW      Qmax/Href   T_forcing   Time")
-print ("%5.0f, %8.2f, %8.2f, %8.2f,%8.2f,%8.2f, %8.2f, %8.2f, %8.2f, %8.2f")% (Runnumber,ps0[nt],a/1000,RR/1000,v1max_i,v2max_i,RMW/1000,Qmax/Href,T_forcing/3600.,nt*dt/3600.)
 
 # Compute the gradient wind, vgrad at the end of the run and plot both vgrad and v
 nt = len(time) - 1
@@ -296,35 +294,44 @@ plt.savefig(DirecOutputend+"GradientWind-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
-T = npy.arange(0, end, dt) 
-for i in range (len(ps0)):
-   ps0[i] = (ps0[i]-ps0ref)/100.0
-   rmax[i] = rmax[i]/1000.0
+#------------------------------
 
+for nt in range (0,len(time)):
+   PSO[nt] = (PSO[nt]-PSOref)/100.0
+   PE[nt] = PE[nt] - math.pi*g*ro1*PE_ref
+   KE[nt] = KE[nt] - math.pi*g*ro1*KE_ref
+
+PE_max= npy.amax([npy.amax(PE[1:-1]),-npy.amin(PE[1:-1])])
+KE_max= npy.amax([npy.amax(KE[1:-1]),-npy.amin(KE[1:-1])])
+for nt in range (0,len(time)):
+   PE[nt] = PE[nt]/PE_max
+   KE[nt] = KE[nt]/KE_max
+   
 # PLOT time-evolution of central surface pressure (surface = lower boundary)
 plt.figure(figsize=(8,6))
-plt.plot(T, ps0,linewidth=2.0, color='black')
+plt.plot(time*(1.0/3600.0), PSO,linewidth=2.0, color='black')
 plt.xlabel('time [hours]',fontsize=14)
 plt.ylabel('surface pressure deficit at r=0 [hPa]',fontsize=14) 
-plt.savefig(DirecOutputend+"ps0-Run"+str(Runnumber)+".png")
+plt.savefig(DirecOutputend+"PSO-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
 # PLOT time-evolution of max velocity
 plt.figure(figsize=(8,6))
-plt.plot(T, vmax,linewidth=2.0, color='black')
+plt.plot(time*(1.0/3600.0), vmax,linewidth=2.0, color='black')
 plt.xlabel('time [hours]',fontsize=14)
 plt.ylabel('maximum velocity in the system [m/s]',fontsize=14) 
 plt.savefig(DirecOutputend+"MaxV-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
-# PLOT time-evolution of rmax velocity
+# PLOT time-evolution of KE -PE
 plt.figure(figsize=(8,6))
-plt.plot(T, rmax,linewidth=2.0, color='black')
+plt.plot(time[1:-1]*(1.0/3600.0), PE[1:-1],linewidth=3.0, color='blue')
+plt.plot(time[1:-1]*(1.0/3600.0), KE[1:-1],linewidth=3.0, color='red')
 plt.xlabel('time [hours]',fontsize=14)
-plt.ylabel('ray of maximum velocity [km]',fontsize=14) 
-plt.savefig(DirecOutputend+"MaxR-Run"+str(Runnumber)+".png")
+plt.ylabel('Energy density [J/m^3]',fontsize=14) 
+plt.savefig(DirecOutputend+"TOT-Run"+str(Runnumber)+".png")
 plt.show()
 plt.close()
 
